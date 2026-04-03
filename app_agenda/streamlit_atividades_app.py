@@ -194,9 +194,6 @@ def render_login_screen() -> None:
             password = st.text_input("Senha", type="password")
             submitted = st.form_submit_button("Entrar", use_container_width=True)
 
-        st.info(
-            "Primeiro acesso padrão: usuário `admin` e senha `Admin@123`. Altere isso antes de usar em equipe."
-        )
 
         if submitted:
             if not username.strip() or not password:
@@ -222,123 +219,6 @@ def get_connection() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
-
-SEED_ATIVIDADES = [
-    {
-        "atividade": "view com historico do produto comprador",
-        "responsavel": "Demétrius",
-        "status": "Finalizado",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Validar Assistente Farma com trancrição de audio",
-        "responsavel": "Lucas",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Integração e desenho da estrutura salesforce (Clientes)",
-        "responsavel": "Rodrigo",
-        "status": "Aguardando",
-        "observacao": "Aguardando time integração passar para Rodrigo",
-    },
-    {
-        "atividade": "Projeto envio dados voai",
-        "responsavel": "",
-        "status": "Pendente",
-        "observacao": "Pensar soluções",
-    },
-    {
-        "atividade": "Separar monitoramento dados/integração",
-        "responsavel": "Lucas",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "TAGs e Mascaramento de Dados Snowflake",
-        "responsavel": "Não definido",
-        "status": "Pendente",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Resouce Monitor Anual snowflake",
-        "responsavel": "Não definido",
-        "status": "Pendente",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Dicionário de dados padrão (muitos campos iguais com nomeclatura distinta)",
-        "responsavel": "Não definido",
-        "status": "Pendente",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Ajuste e complemento de documentação na wiki",
-        "responsavel": "Não definido",
-        "status": "Pendente",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Validar objeto inválidos ou sem uso camadas bronze, stage e gold",
-        "responsavel": "Rodrigo",
-        "status": "Aguardando",
-        "observacao": "Em Validação Rodrigo",
-    },
-    {
-        "atividade": "Construir estrura de ROLES baseando em DIREÇÃO/COORDENÇÃO/ANALISTAS",
-        "responsavel": "Não definido",
-        "status": "Pendente",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Tabela de TOKEN SAP vincular com a venda",
-        "responsavel": "Rodrigo",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Planilha Metas de Funcionários",
-        "responsavel": "Demétrius",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "colocar task acionar api qlik cloud para transformaçẽos dag auditoria",
-        "responsavel": "Lucas",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Ruptura/Indicadores Comerciais/RH Quadro dia",
-        "responsavel": "Gabriel",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "POC Centralização de Estoque",
-        "responsavel": "Lucas",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Validação Notas Fiscais",
-        "responsavel": "Augusto",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Integração API Iqvia",
-        "responsavel": "Augusto",
-        "status": "Em Andamento",
-        "observacao": "Carga inicial",
-    },
-    {
-        "atividade": "Vincular Quantidade de produtos com notas em transito",
-        "responsavel": "Eu",
-        "status": "Pendente",
-        "observacao": "Segunda Feira",
-    },
-]
 
 
 def seed_initial_data(conn: sqlite3.Connection) -> None:
