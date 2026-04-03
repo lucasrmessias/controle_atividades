@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import os
 import secrets
 import sqlite3
 from contextlib import closing
@@ -10,7 +11,7 @@ import pandas as pd
 import streamlit as st
 
 
-DB_PATH = Path("atividades.db")
+DB_PATH = Path(os.getenv("DB_PATH", "atividades.db"))
 MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_MINUTES = 15
 SESSION_TIMEOUT_MINUTES = 30
@@ -20,6 +21,33 @@ STATUS_OPTIONS = [
     "Aguardando",
     "Finalizado",
 ]
+
+
+# =========================
+# Configuração / ambiente
+# =========================
+def get_secret(key: str, default: str | None = None) -> str | None:
+    value = os.getenv(key)
+    if value:
+        return value
+
+    try:
+        secret_value = st.secrets.get(key)
+        if secret_value:
+            return str(secret_value)
+    except Exception:
+        pass
+
+    return default
+
+
+def get_required_secret(key: str) -> str:
+    value = get_secret(key)
+    if not value:
+        raise RuntimeError(
+            f"Configuração obrigatória ausente: {key}. Defina em variável de ambiente ou em st.secrets."
+        )
+    return value
 
 
 # =========================
@@ -48,8 +76,9 @@ def ensure_default_admin(conn: sqlite3.Connection) -> None:
     if total > 0:
         return
 
-    default_user = "admin"
-    default_password = "Admin@123"
+    default_user = get_required_secret("APP_ADMIN_USERNAME")
+    default_password = get_required_secret("APP_ADMIN_PASSWORD")
+    default_name = get_secret("APP_ADMIN_NAME", "Administrador")
     salt, password_hash = hash_password(default_password)
     conn.execute(
         """
@@ -68,7 +97,7 @@ def ensure_default_admin(conn: sqlite3.Connection) -> None:
         """,
         (
             default_user,
-            "Administrador",
+            default_name,
             salt,
             password_hash,
             datetime.utcnow().isoformat(),
@@ -190,10 +219,9 @@ def render_login_screen() -> None:
         st.caption("Entre com seu usuário e senha para acessar a gestão de atividades.")
 
         with st.form("login_form", clear_on_submit=False):
-            username = st.text_input("Usuário")
-            password = st.text_input("Senha", type="password")
+            username = st.text_input("Usuário", autocomplete="username")
+            password = st.text_input("Senha", type="password", autocomplete="current-password")
             submitted = st.form_submit_button("Entrar", use_container_width=True)
-
 
         if submitted:
             if not username.strip() or not password:
@@ -219,6 +247,15 @@ def get_connection() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
+
+SEED_ATIVIDADES = [
+    {
+        "atividade": "Teste",
+        "responsavel": "James",
+        "status": "Finalizado",
+        "observacao": "Compra Xuxoso",
+    }
+]
 
 
 def seed_initial_data(conn: sqlite3.Connection) -> None:
@@ -765,40 +802,46 @@ def render_tabela(df: pd.DataFrame) -> None:
 # Main
 # =========================
 def main() -> None:
-    configurar_pagina()
-    init_db()
+    try:
+        configurar_pagina()
+        init_db()
 
-    if not is_session_valid():
-        render_login_screen()
+        if not is_session_valid():
+            render_login_screen()
 
-    top1, top2 = st.columns([6, 1])
-    with top1:
-        st.title("📋 Gestão de Atividades")
-        st.caption("Controle de tarefas com responsável, prazo, status e alerta de atraso.")
-        st.caption(f"Usuário logado: {st.session_state.get('nome_usuario', '')} ({st.session_state.get('username', '')})")
-    with top2:
-        st.write("")
-        st.write("")
-        if st.button("Sair", use_container_width=True):
-            logout_user()
-            st.rerun()
+        top1, top2 = st.columns([6, 1])
+        with top1:
+            st.title("📋 Gestão de Atividades")
+            st.caption("Controle de tarefas com responsável, prazo, status e alerta de atraso.")
+            st.caption(f"Usuário logado: {st.session_state.get('nome_usuario', '')}")
+        with top2:
+            st.write("")
+            st.write("")
+            if st.button("Sair", use_container_width=True):
+                logout_user()
+                st.rerun()
 
-    render_form_cadastro()
+        render_form_cadastro()
 
-    raw_df = get_activities()
-    prepared_df = preparar_dataframe(raw_df)
+        raw_df = get_activities()
+        prepared_df = preparar_dataframe(raw_df)
 
-    render_metricas(prepared_df)
-    st.divider()
+        render_metricas(prepared_df)
+        st.divider()
 
-    filtered_df = aplicar_filtros(prepared_df)
-    st.divider()
+        filtered_df = aplicar_filtros(prepared_df)
+        st.divider()
 
-    tab1, tab2 = st.tabs(["Cards", "Tabela"])
-    with tab1:
-        render_cards(filtered_df)
-    with tab2:
-        render_tabela(filtered_df)
+        tab1, tab2 = st.tabs(["Cards", "Tabela"])
+        with tab1:
+            render_cards(filtered_df)
+        with tab2:
+            render_tabela(filtered_df)
+    except RuntimeError as exc:
+        st.error(str(exc))
+        st.info(
+            "No Streamlit Community Cloud, configure APP_ADMIN_USERNAME, APP_ADMIN_PASSWORD e opcionalmente APP_ADMIN_NAME em Secrets."
+        )
 
 
 if __name__ == "__main__":
